@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生管理系统 - 成绩管理</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>学生管理系统</h1>
+        <div class="header-right">
+            <span>欢迎使用</span>
+            <button class="btn-logout" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <ul>
+            <li><a href="index.html"><span class="nav-icon">🏠</span>首页</a></li>
+            <li><a href="student.html"><span class="nav-icon">👨‍🎓</span>学生管理</a></li>
+            <li><a href="teacher.html"><span class="nav-icon">👨‍🏫</span>教师管理</a></li>
+            <li><a href="class.html"><span class="nav-icon">📚</span>班级管理</a></li>
+            <li><a href="score.html" class="active"><span class="nav-icon">📝</span>成绩管理</a></li>
+            <li><a href="employment.html"><span class="nav-icon">💼</span>就业管理</a></li>
+            <li><a href="consultant.html"><span class="nav-icon">👔</span>顾问管理</a></li>
+            <li><a href="department.html"><span class="nav-icon">🏢</span>部门管理</a></li>
+            <li><a href="analysis.html"><span class="nav-icon">📊</span>统计分析</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">成绩录入</h2>
+                <button class="btn btn-primary" onclick="openModal('addModal')">录入成绩</button>
+            </div>
+
+            <div class="search-bar">
+                <input type="number" id="studentIdInput" class="form-control" placeholder="输入学生ID查询成绩">
+                <button class="btn btn-primary" onclick="searchScore()">查询成绩</button>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>学生ID</th>
+                        <th>学生姓名</th>
+                        <th>考核序次</th>
+                        <th>成绩</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="scoreTable">
+                    <tr><td colspan="5" class="empty-state">请输入学生ID查询成绩</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="addModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">录入成绩</h3>
+                <button class="modal-close" onclick="closeModal('addModal'); clearForm('addForm')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>学生ID</label>
+                            <input type="number" name="student_id" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>考核序次</label>
+                            <input type="number" name="kaohe_rank" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>成绩</label>
+                            <input type="number" name="score" class="form-control" step="0.5" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('addModal'); clearForm('addForm')">取消</button>
+                <button class="btn btn-primary" onclick="addScore()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">修改成绩</h3>
+                <button class="modal-close" onclick="closeModal('editModal'); clearForm('editForm')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" name="student_id">
+                    <input type="hidden" name="kaohe_rank">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>学生ID</label>
+                            <input type="number" name="student_id_display" class="form-control" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>考核序次</label>
+                            <input type="number" name="kaohe_rank_display" class="form-control" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>成绩</label>
+                            <input type="number" name="score" class="form-control" step="0.5" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('editModal'); clearForm('editForm')">取消</button>
+                <button class="btn btn-primary" onclick="updateScore()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadUserInfo);
+        let currentStudentId = null;
+        let currentKaoheRank = null;
+
+        async function searchScore() {
+            const studentId = document.getElementById('studentIdInput').value;
+            if (!studentId) {
+                showAlert('请输入学生ID', 'error');
+                return;
+            }
+            
+            try {
+                const response = await request(`/score/score/${studentId}`);
+                if (response.data.status_code === 200) {
+                    renderScores(response.data.data);
+                } else {
+                    renderScores([]);
+                }
+            } catch (error) {
+                console.error('Search score error:', error);
+                renderScores([]);
+            }
+        }
+
+        function renderScores(scores) {
+            const tbody = document.getElementById('scoreTable');
+            if (!scores || scores.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无成绩数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = scores.map(s => `
+                <tr>
+                    <td>${s.student_id || '-'}</td>
+                    <td>${s.student_name || '-'}</td>
+                    <td>${s.kaohe_rank || '-'}</td>
+                    <td>${s.score || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="editScore(${s.student_id}, ${s.kaohe_rank}, ${s.score})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteScore(${s.student_id}, ${s.kaohe_rank})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function addScore() {
+            const form = document.getElementById('addForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await request('/score/score', {
+                    method: 'POST',
+                    body: data
+                });
+                
+                if (response.data.status_code === 200) {
+                    showAlert('录入成功');
+                    closeModal('addModal');
+                    clearForm('addForm');
+                    searchScore();
+                } else {
+                    showAlert(response.data.message || '录入失败', 'error');
+                }
+            } catch (error) {
+                console.error('Add score error:', error);
+                showAlert('录入失败', 'error');
+            }
+        }
+
+        function editScore(studentId, kaoheRank, score) {
+            currentStudentId = studentId;
+            currentKaoheRank = kaoheRank;
+            
+            document.getElementById('editForm').querySelector('input[name="student_id"]').value = studentId;
+            document.getElementById('editForm').querySelector('input[name="kaohe_rank"]').value = kaoheRank;
+            document.getElementById('editForm').querySelector('input[name="student_id_display"]').value = studentId;
+            document.getElementById('editForm').querySelector('input[name="kaohe_rank_display"]').value = kaoheRank;
+            document.getElementById('editForm').querySelector('input[name="score"]').value = score;
+            
+            openModal('editModal');
+        }
+
+        async function updateScore() {
+            const score = document.getElementById('editForm').querySelector('input[name="score"]').value;
+            
+            try {
+                const response = await request(`/score/score/update?student_id=${currentStudentId}&kaohe_rank=${currentKaoheRank}`, {
+                    method: 'PUT',
+                    body: { score }
+                });
+                
+                if (response.data.status_code === 200) {
+                    showAlert('修改成功');
+                    closeModal('editModal');
+                    clearForm('editForm');
+                    searchScore();
+                } else {
+                    showAlert(response.data.message || '修改失败', 'error');
+                }
+            } catch (error) {
+                console.error('Update score error:', error);
+                showAlert('修改失败', 'error');
+            }
+        }
+
+        async function deleteScore(studentId, kaoheRank) {
+            if (!confirm('确定要删除该成绩吗？')) return;
+            
+            try {
+                const response = await request(`/score/score/delete?student_id=${studentId}&kaohe_rank=${kaoheRank}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.data.status_code === 200) {
+                    showAlert('删除成功');
+                    searchScore();
+                } else {
+                    showAlert(response.data.message || '删除失败', 'error');
+                }
+            } catch (error) {
+                console.error('Delete score error:', error);
+                showAlert('删除失败', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

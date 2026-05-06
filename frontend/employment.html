@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生管理系统 - 就业管理</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>学生管理系统</h1>
+        <div class="header-right">
+            <span>欢迎使用</span>
+            <button class="btn-logout" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <ul>
+            <li><a href="index.html"><span class="nav-icon">🏠</span>首页</a></li>
+            <li><a href="student.html"><span class="nav-icon">👨‍🎓</span>学生管理</a></li>
+            <li><a href="teacher.html"><span class="nav-icon">👨‍🏫</span>教师管理</a></li>
+            <li><a href="class.html"><span class="nav-icon">📚</span>班级管理</a></li>
+            <li><a href="score.html"><span class="nav-icon">📝</span>成绩管理</a></li>
+            <li><a href="employment.html" class="active"><span class="nav-icon">💼</span>就业管理</a></li>
+            <li><a href="consultant.html"><span class="nav-icon">👔</span>顾问管理</a></li>
+            <li><a href="department.html"><span class="nav-icon">🏢</span>部门管理</a></li>
+            <li><a href="analysis.html"><span class="nav-icon">📊</span>统计分析</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">就业信息列表</h2>
+                <button class="btn btn-primary" onclick="openModal('addModal')">添加就业信息</button>
+            </div>
+
+            <div class="search-bar">
+                <select id="searchKey" class="form-control" style="max-width: 120px;">
+                    <option value="学生编号">学生编号</option>
+                    <option value="就业公司">就业公司</option>
+                    <option value="工资">工资</option>
+                </select>
+                <input type="text" id="searchValue" class="form-control" placeholder="搜索关键词">
+                <button class="btn btn-primary" onclick="searchEmployment()">搜索</button>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>学生编号</th>
+                        <th>学生姓名</th>
+                        <th>就业公司</th>
+                        <th>岗位</th>
+                        <th>薪资</th>
+                        <th>就业时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="employmentTable">
+                    <tr><td colspan="8" class="empty-state">加载中...</td></tr>
+                </tbody>
+            </table>
+
+            <div class="pagination" id="pagination">
+                <button onclick="prevPage()" disabled>上一页</button>
+                <span>第 <span id="currentPage">1</span> 页</span>
+                <button onclick="nextPage()">下一页</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">添加就业信息</h3>
+                <button class="modal-close" onclick="closeModal('addModal'); clearForm('addForm')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>学生编号</label>
+                            <input type="text" name="student_id" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>学生姓名</label>
+                            <input type="text" name="student_name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>就业公司</label>
+                            <input type="text" name="company" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>岗位</label>
+                            <input type="text" name="job" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>薪资</label>
+                            <input type="number" name="salary" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>就业时间</label>
+                            <input type="date" name="employ_time" class="form-control" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('addModal'); clearForm('addForm')">取消</button>
+                <button class="btn btn-primary" onclick="addEmployment()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">修改就业信息</h3>
+                <button class="modal-close" onclick="closeModal('editModal'); clearForm('editForm')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" name="id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>学生编号</label>
+                            <input type="text" name="student_id" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>学生姓名</label>
+                            <input type="text" name="student_name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>就业公司</label>
+                            <input type="text" name="company" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>岗位</label>
+                            <input type="text" name="job" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>薪资</label>
+                            <input type="number" name="salary" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>就业时间</label>
+                            <input type="date" name="employ_time" class="form-control" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('editModal'); clearForm('editForm')">取消</button>
+                <button class="btn btn-primary" onclick="updateEmployment()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        let currentPage = 1;
+        let currentEditId = null;
+        let allEmployments = [];
+
+        async function loadEmployments(page = 1) {
+            try {
+                const response = await request(`/employment/pageshow?page=${page}&size=5`);
+                const employments = response.data.data || [];
+                allEmployments = employments;
+                renderEmployments(employments);
+                document.getElementById('currentPage').textContent = page;
+                currentPage = page;
+            } catch (error) {
+                console.error('Load employments error:', error);
+                document.getElementById('employmentTable').innerHTML = '<tr><td colspan="8" class="empty-state">加载失败</td></tr>';
+            }
+        }
+
+        function renderEmployments(employments) {
+            const tbody = document.getElementById('employmentTable');
+            if (!employments || employments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">暂无就业数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = employments.map(e => `
+                <tr>
+                    <td>${e.id || '-'}</td>
+                    <td>${e.student_id || '-'}</td>
+                    <td>${e.student_name || '-'}</td>
+                    <td>${e.company || '-'}</td>
+                    <td>${e.job || '-'}</td>
+                    <td>${e.salary ? '¥' + e.salary.toLocaleString() : '-'}</td>
+                    <td>${formatDate(e.employ_time)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="editEmployment(${e.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEmployment(${e.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                loadEmployments(currentPage - 1);
+            }
+        }
+
+        function nextPage() {
+            loadEmployments(currentPage + 1);
+        }
+
+        async function searchEmployment() {
+            const key = document.getElementById('searchKey').value;
+            const value = document.getElementById('searchValue').value;
+            
+            if (!value) {
+                loadEmployments(1);
+                return;
+            }
+            
+            try {
+                const response = await request(`/employment/query_by_type?key=${encodeURIComponent(key)}&value=${encodeURIComponent(value)}`);
+                if (response.data.status_code === 200) {
+                    renderEmployments(response.data.data || []);
+                } else {
+                    renderEmployments([]);
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                renderEmployments([]);
+            }
+        }
+
+        async function addEmployment() {
+            const form = document.getElementById('addForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await request('/employment/add', {
+                    method: 'POST',
+                    body: data
+                });
+                
+                if (response.data.message === '增加成功！') {
+                    showAlert('添加成功');
+                    closeModal('addModal');
+                    clearForm('addForm');
+                    loadEmployments(currentPage);
+                } else {
+                    showAlert(response.data.detail || '添加失败', 'error');
+                }
+            } catch (error) {
+                console.error('Add error:', error);
+                showAlert('添加失败', 'error');
+            }
+        }
+
+        async function editEmployment(id) {
+            try {
+                const response = await request('/employment/pageshow?page=1&size=100');
+                const employments = response.data.data || [];
+                const employment = employments.find(e => e.id === id);
+                
+                if (employment) {
+                    currentEditId = id;
+                    document.getElementById('editForm').querySelector('input[name="id"]').value = employment.id;
+                    document.getElementById('editForm').querySelector('input[name="student_id"]').value = employment.student_id;
+                    document.getElementById('editForm').querySelector('input[name="student_name"]').value = employment.student_name;
+                    document.getElementById('editForm').querySelector('input[name="company"]').value = employment.company;
+                    document.getElementById('editForm').querySelector('input[name="job"]').value = employment.job;
+                    document.getElementById('editForm').querySelector('input[name="salary"]').value = employment.salary;
+                    document.getElementById('editForm').querySelector('input[name="employ_time"]').value = employment.employ_time?.split('T')[0];
+                    openModal('editModal');
+                }
+            } catch (error) {
+                console.error('Edit error:', error);
+                showAlert('获取数据失败', 'error');
+            }
+        }
+
+        async function updateEmployment() {
+            const form = document.getElementById('editForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await request(`/employment/${currentEditId}`, {
+                    method: 'PUT',
+                    body: data
+                });
+                
+                if (response.data.status_code === 200) {
+                    showAlert('修改成功');
+                    closeModal('editModal');
+                    clearForm('editForm');
+                    loadEmployments(currentPage);
+                } else {
+                    showAlert(response.data.message || '修改失败', 'error');
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                showAlert('修改失败', 'error');
+            }
+        }
+
+        async function deleteEmployment(id) {
+            if (!confirm('确定要删除该就业信息吗？')) return;
+            
+            try {
+                const response = await request(`/employment/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.data.status_code === 200) {
+                    showAlert('删除成功');
+                    loadEmployments(currentPage);
+                } else {
+                    showAlert(response.data.message || '删除失败', 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showAlert('删除失败', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserInfo();
+            loadEmployments(1);
+        });
+    </script>
+</body>
+</html>

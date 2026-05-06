@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生管理系统 - 班级管理</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>学生管理系统</h1>
+        <div class="header-right">
+            <span>欢迎使用</span>
+            <button class="btn-logout" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <ul>
+            <li><a href="index.html"><span class="nav-icon">🏠</span>首页</a></li>
+            <li><a href="student.html"><span class="nav-icon">👨‍🎓</span>学生管理</a></li>
+            <li><a href="teacher.html"><span class="nav-icon">👨‍🏫</span>教师管理</a></li>
+            <li><a href="class.html" class="active"><span class="nav-icon">📚</span>班级管理</a></li>
+            <li><a href="score.html"><span class="nav-icon">📝</span>成绩管理</a></li>
+            <li><a href="employment.html"><span class="nav-icon">💼</span>就业管理</a></li>
+            <li><a href="consultant.html"><span class="nav-icon">👔</span>顾问管理</a></li>
+            <li><a href="department.html"><span class="nav-icon">🏢</span>部门管理</a></li>
+            <li><a href="analysis.html"><span class="nav-icon">📊</span>统计分析</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">班级列表</h2>
+                <button class="btn btn-primary" onclick="openModal('addModal')">添加班级</button>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>班级ID</th>
+                        <th>课程开始时间</th>
+                        <th>班主任</th>
+                        <th>授课老师</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="classTable">
+                    <tr><td colspan="5" class="empty-state">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="addModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">添加班级</h3>
+                <button class="modal-close" onclick="closeModal('addModal'); clearForm('addForm')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>班级编号</label>
+                            <input type="number" name="class_id" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>课程开始时间</label>
+                            <input type="date" name="course_start_date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>班主任</label>
+                            <input type="text" name="is_homeroom_teacher" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>授课老师</label>
+                            <input type="text" name="class_teacher" class="form-control" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('addModal'); clearForm('addForm')">取消</button>
+                <button class="btn btn-primary" onclick="addClass()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">修改班级</h3>
+                <button class="modal-close" onclick="closeModal('editModal'); clearForm('editForm')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" name="class_id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>课程开始时间</label>
+                            <input type="date" name="course_start_date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>班主任</label>
+                            <input type="text" name="is_homeroom_teacher" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>授课老师</label>
+                            <input type="text" name="class_teacher" class="form-control" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('editModal'); clearForm('editForm')">取消</button>
+                <button class="btn btn-primary" onclick="updateClass()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        let currentEditId = null;
+
+        async function loadClasses() {
+            try {
+                const response = await request('/class_info/get_class_all');
+                const classes = response.data.data || [];
+                renderClasses(classes);
+            } catch (error) {
+                console.error('Load classes error:', error);
+                document.getElementById('classTable').innerHTML = '<tr><td colspan="5" class="empty-state">加载失败</td></tr>';
+            }
+        }
+
+        function renderClasses(classes) {
+            const tbody = document.getElementById('classTable');
+            if (!classes || classes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无班级数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = classes.map(c => `
+                <tr>
+                    <td>${c.class_id || '-'}</td>
+                    <td>${formatDate(c.course_start_date) || '-'}</td>
+                    <td>${c.is_homeroom_teacher || '-'}</td>
+                    <td>${c.class_teacher || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="editClass(${c.class_id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteClass(${c.class_id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function addClass() {
+            const form = document.getElementById('addForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await request('/class_info/', {
+                    method: 'POST',
+                    body: data
+                });
+                
+                if (response.data.message === '增加成功') {
+                    showAlert('添加成功');
+                    closeModal('addModal');
+                    clearForm('addForm');
+                    loadClasses();
+                } else {
+                    showAlert(response.data.detail || '添加失败', 'error');
+                }
+            } catch (error) {
+                console.error('Add error:', error);
+                showAlert('添加失败', 'error');
+            }
+        }
+
+        async function editClass(id) {
+            try {
+                const response = await request(`/class_info/${id}`);
+                const cls = response.data.data;
+                
+                if (cls) {
+                    currentEditId = id;
+                    document.getElementById('editForm').querySelector('input[name="class_id"]').value = cls.class_id;
+                    document.getElementById('editForm').querySelector('input[name="course_start_date"]').value = cls.course_start_date?.split('T')[0];
+                    document.getElementById('editForm').querySelector('input[name="is_homeroom_teacher"]').value = cls.is_homeroom_teacher;
+                    document.getElementById('editForm').querySelector('input[name="class_teacher"]').value = cls.class_teacher;
+                    openModal('editModal');
+                }
+            } catch (error) {
+                console.error('Edit error:', error);
+                showAlert('获取数据失败', 'error');
+            }
+        }
+
+        async function updateClass() {
+            const form = document.getElementById('editForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await request(`/class_info/${currentEditId}`, {
+                    method: 'PUT',
+                    body: data
+                });
+                
+                if (response.data.message === '修改成功') {
+                    showAlert('修改成功');
+                    closeModal('editModal');
+                    clearForm('editForm');
+                    loadClasses();
+                } else {
+                    showAlert(response.data.detail || '修改失败', 'error');
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                showAlert('修改失败', 'error');
+            }
+        }
+
+        async function deleteClass(id) {
+            if (!confirm('确定要删除该班级吗？')) return;
+            
+            try {
+                const response = await request(`/class_info/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.data.message === '删除成功') {
+                    showAlert('删除成功');
+                    loadClasses();
+                } else {
+                    showAlert(response.data.message || '删除失败', 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showAlert('删除失败', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserInfo();
+            loadClasses();
+        });
+    </script>
+</body>
+</html>

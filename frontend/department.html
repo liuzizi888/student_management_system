@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生管理系统 - 部门管理</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>学生管理系统</h1>
+        <div class="header-right">
+            <span>欢迎使用</span>
+            <button class="btn-logout" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <ul>
+            <li><a href="index.html"><span class="nav-icon">🏠</span>首页</a></li>
+            <li><a href="student.html"><span class="nav-icon">👨‍🎓</span>学生管理</a></li>
+            <li><a href="teacher.html"><span class="nav-icon">👨‍🏫</span>教师管理</a></li>
+            <li><a href="class.html"><span class="nav-icon">📚</span>班级管理</a></li>
+            <li><a href="score.html"><span class="nav-icon">📝</span>成绩管理</a></li>
+            <li><a href="employment.html"><span class="nav-icon">💼</span>就业管理</a></li>
+            <li><a href="consultant.html"><span class="nav-icon">👔</span>顾问管理</a></li>
+            <li><a href="department.html" class="active"><span class="nav-icon">🏢</span>部门管理</a></li>
+            <li><a href="analysis.html"><span class="nav-icon">📊</span>统计分析</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">部门列表</h2>
+                <button class="btn btn-primary" onclick="openModal('addModal')">添加部门</button>
+            </div>
+            
+            <div class="search-bar">
+                <input type="text" id="deptName" class="form-control" placeholder="部门名称">
+                <input type="number" id="pageSize" class="form-control" placeholder="每页条数" value="10" min="1" style="max-width: 120px;">
+                <input type="number" id="pageNum" class="form-control" placeholder="页码" value="1" min="1" style="max-width: 120px;">
+                <button class="btn btn-primary" onclick="loadDepartments()">查询</button>
+                <button class="btn" onclick="loadParentDepts()">查看顶级部门</button>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>部门ID</th>
+                        <th>部门名称</th>
+                        <th>上级部门</th>
+                        <th>负责人</th>
+                        <th>联系电话</th>
+                        <th>备注</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="departmentTable">
+                    <tr><td colspan="7" class="empty-state">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="addModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">添加部门</h3>
+                <button class="modal-close" onclick="closeModal('addModal'); clearForm('addForm')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>部门名称</label>
+                            <input type="text" name="dept_name" class="form-control" required maxlength="50">
+                        </div>
+                        <div class="form-group">
+                            <label>上级部门ID</label>
+                            <input type="number" name="parent_id" class="form-control" value="0" placeholder="0为顶级部门">
+                        </div>
+                        <div class="form-group">
+                            <label>负责人</label>
+                            <input type="text" name="leader" class="form-control" maxlength="20">
+                        </div>
+                        <div class="form-group">
+                            <label>联系电话</label>
+                            <input type="tel" name="phone" class="form-control" pattern="^1[3-9]\d{9}$">
+                        </div>
+                        <div class="form-group">
+                            <label>备注</label>
+                            <textarea name="remark" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('addModal'); clearForm('addForm')">取消</button>
+                <button class="btn btn-primary" onclick="addDepartment()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">修改部门</h3>
+                <button class="modal-close" onclick="closeModal('editModal'); clearForm('editForm')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" name="id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>部门名称</label>
+                            <input type="text" name="dept_name" class="form-control" required maxlength="50">
+                        </div>
+                        <div class="form-group">
+                            <label>上级部门ID</label>
+                            <input type="number" name="parent_id" class="form-control" value="0" placeholder="0为顶级部门">
+                        </div>
+                        <div class="form-group">
+                            <label>负责人</label>
+                            <input type="text" name="leader" class="form-control" maxlength="20">
+                        </div>
+                        <div class="form-group">
+                            <label>联系电话</label>
+                            <input type="tel" name="phone" class="form-control" pattern="^1[3-9]\d{9}$">
+                        </div>
+                        <div class="form-group">
+                            <label>备注</label>
+                            <textarea name="remark" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('editModal'); clearForm('editForm')">取消</button>
+                <button class="btn btn-primary" onclick="updateDepartment()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        let currentEditId = null;
+
+        async function loadDepartments() {
+            const deptName = document.getElementById('deptName').value || '';
+            const pageSize = document.getElementById('pageSize').value || 10;
+            const pageNum = document.getElementById('pageNum').value || 1;
+            
+            try {
+                let url = `/department/page/${pageSize}/${pageNum}`;
+                if (deptName) {
+                    url += `?dept_name=${encodeURIComponent(deptName)}`;
+                }
+                const response = await request(url);
+                const departments = response.data.data || [];
+                renderDepartments(departments);
+            } catch (error) {
+                console.error('Load departments error:', error);
+                document.getElementById('departmentTable').innerHTML = '<tr><td colspan="7" class="empty-state">加载失败</td></tr>';
+            }
+        }
+
+        async function loadParentDepts() {
+            try {
+                const response = await request('/department/query_parent?parent_id=0');
+                const departments = response.data.data || [];
+                renderDepartments(departments);
+            } catch (error) {
+                console.error('Load parent departments error:', error);
+                showAlert('加载顶级部门失败', 'error');
+            }
+        }
+
+        function renderDepartments(departments) {
+            const tbody = document.getElementById('departmentTable');
+            if (!departments || departments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无部门数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = departments.map(d => `
+                <tr>
+                    <td>${d.department_id || '-'}</td>
+                    <td>${d.dept_name || '-'}</td>
+                    <td>${d.parent_id === 0 ? '顶级部门' : d.parent_id || '-'}</td>
+                    <td>${d.leader || '-'}</td>
+                    <td>${d.phone || '-'}</td>
+                    <td>${d.remark || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="editDepartment(${d.department_id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteDepartment(${d.department_id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function addDepartment() {
+            const form = document.getElementById('addForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            data.parent_id = parseInt(data.parent_id) || 0;
+            
+            try {
+                const response = await request('/department/add', {
+                    method: 'POST',
+                    body: data
+                });
+                
+                if (response.data.status_code === 200) {
+                    showAlert('添加成功');
+                    closeModal('addModal');
+                    clearForm('addForm');
+                    loadDepartments();
+                } else {
+                    showAlert(response.data.message || '添加失败', 'error');
+                }
+            } catch (error) {
+                console.error('Add error:', error);
+                showAlert('添加失败', 'error');
+            }
+        }
+
+        async function editDepartment(id) {
+            currentEditId = id;
+            try {
+                const response = await request(`/department/page/100/1`);
+                const departments = response.data.data || [];
+                const department = departments.find(d => d.department_id === id);
+                
+                if (department) {
+                    document.getElementById('editForm').querySelector('input[name="id"]').value = department.department_id;
+                    document.getElementById('editForm').querySelector('input[name="dept_name"]').value = department.dept_name || '';
+                    document.getElementById('editForm').querySelector('input[name="parent_id"]').value = department.parent_id || 0;
+                    document.getElementById('editForm').querySelector('input[name="leader"]').value = department.leader || '';
+                    document.getElementById('editForm').querySelector('input[name="phone"]').value = department.phone || '';
+                    document.getElementById('editForm').querySelector('textarea[name="remark"]').value = department.remark || '';
+                    openModal('editModal');
+                }
+            } catch (error) {
+                console.error('Edit error:', error);
+                showAlert('获取数据失败', 'error');
+            }
+        }
+
+        async function updateDepartment() {
+            const form = document.getElementById('editForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            data.parent_id = parseInt(data.parent_id) || 0;
+            
+            try {
+                const response = await request(`/department/update?department_id=${currentEditId}`, {
+                    method: 'PUT',
+                    body: data
+                });
+                
+                if (response.data.status_code === 200) {
+                    showAlert('修改成功');
+                    closeModal('editModal');
+                    clearForm('editForm');
+                    loadDepartments();
+                } else {
+                    showAlert(response.data.message || '修改失败', 'error');
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                showAlert('修改失败', 'error');
+            }
+        }
+
+        async function deleteDepartment(id) {
+            if (!confirm('确定要删除这个部门吗？')) return;
+            
+            try {
+                const response = await request(`/department/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.data.status_code === 200) {
+                    showAlert('删除成功');
+                    loadDepartments();
+                } else {
+                    showAlert(response.data.message || '删除失败', 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showAlert('删除失败', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserInfo();
+            loadDepartments();
+        });
+    </script>
+</body>
+</html>

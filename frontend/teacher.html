@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生管理系统 - 教师管理</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>学生管理系统</h1>
+        <div class="header-right">
+            <span>欢迎使用</span>
+            <button class="btn-logout" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <ul>
+            <li><a href="index.html"><span class="nav-icon">🏠</span>首页</a></li>
+            <li><a href="student.html"><span class="nav-icon">👨‍🎓</span>学生管理</a></li>
+            <li><a href="teacher.html" class="active"><span class="nav-icon">👨‍🏫</span>教师管理</a></li>
+            <li><a href="class.html"><span class="nav-icon">📚</span>班级管理</a></li>
+            <li><a href="score.html"><span class="nav-icon">📝</span>成绩管理</a></li>
+            <li><a href="employment.html"><span class="nav-icon">💼</span>就业管理</a></li>
+            <li><a href="consultant.html"><span class="nav-icon">👔</span>顾问管理</a></li>
+            <li><a href="department.html"><span class="nav-icon">🏢</span>部门管理</a></li>
+            <li><a href="analysis.html"><span class="nav-icon">📊</span>统计分析</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">教师列表</h2>
+                <button class="btn btn-primary" onclick="openModal('addModal')">添加教师</button>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>教师ID</th>
+                        <th>姓名</th>
+                        <th>性别</th>
+                        <th>年龄</th>
+                        <th>职称</th>
+                        <th>教授课程</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="teacherTable">
+                    <tr><td colspan="7" class="empty-state">加载中...</td></tr>
+                </tbody>
+            </table>
+
+            <div class="pagination" id="pagination">
+                <button onclick="prevPage()" disabled>上一页</button>
+                <span>第 <span id="currentPage">1</span> 页</span>
+                <button onclick="nextPage()">下一页</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">添加教师</h3>
+                <button class="modal-close" onclick="closeModal('addModal'); clearForm('addForm')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>姓名</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>性别</label>
+                            <select name="gender" class="form-control" required>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>年龄</label>
+                            <input type="number" name="age" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>职称</label>
+                            <input type="text" name="title" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>教授课程</label>
+                            <input type="text" name="course" class="form-control" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('addModal'); clearForm('addForm')">取消</button>
+                <button class="btn btn-primary" onclick="addTeacher()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">修改教师</h3>
+                <button class="modal-close" onclick="closeModal('editModal'); clearForm('editForm')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" name="id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>姓名</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>性别</label>
+                            <select name="gender" class="form-control" required>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>年龄</label>
+                            <input type="number" name="age" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>职称</label>
+                            <input type="text" name="title" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>教授课程</label>
+                            <input type="text" name="course" class="form-control" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('editModal'); clearForm('editForm')">取消</button>
+                <button class="btn btn-primary" onclick="updateTeacher()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        let currentPage = 1;
+        let currentEditId = null;
+
+        async function loadTeachers(page = 1) {
+            try {
+                const response = await request(`/teacher/check_teacher?page_num=${page}&page_size=10`);
+                const teachers = response.data.data || [];
+                renderTeachers(teachers);
+                document.getElementById('currentPage').textContent = page;
+                currentPage = page;
+            } catch (error) {
+                console.error('Load teachers error:', error);
+                document.getElementById('teacherTable').innerHTML = '<tr><td colspan="7" class="empty-state">加载失败</td></tr>';
+            }
+        }
+
+        function calculateAge(birthDate) {
+            if (!birthDate) return '-';
+            const birth = new Date(birthDate);
+            const now = new Date();
+            let age = now.getFullYear() - birth.getFullYear();
+            const monthDiff = now.getMonth() - birth.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        function calculateBirthDate(age) {
+            if (!age || age <= 0) return new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const birth = new Date(now.getFullYear() - age, now.getMonth(), now.getDate());
+            return birth.toISOString().split('T')[0];
+        }
+
+        function renderTeachers(teachers) {
+            const tbody = document.getElementById('teacherTable');
+            if (!teachers || teachers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无教师数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = teachers.map(t => `
+                <tr>
+                    <td>${t.teacher_id || '-'}</td>
+                    <td>${t.name || '-'}</td>
+                    <td>${t.sex || '-'}</td>
+                    <td>${calculateAge(t.birth)}</td>
+                    <td>${t.subject || '-'}</td>
+                    <td>${t.subject || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="editTeacher(${t.teacher_id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteTeacher(${t.teacher_id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                loadTeachers(currentPage - 1);
+            }
+        }
+
+        function nextPage() {
+            loadTeachers(currentPage + 1);
+        }
+
+        async function addTeacher() {
+            const form = document.getElementById('addForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            const teacherData = {
+                name: data.name,
+                sex: data.gender,
+                birth: calculateBirthDate(parseInt(data.age)),
+                subject: data.course || data.title
+            };
+            
+            try {
+                const response = await request('/teacher/add_teacher', {
+                    method: 'POST',
+                    body: teacherData
+                });
+                
+                if (response.data.message === '查询成功！') {
+                    showAlert('添加成功');
+                    closeModal('addModal');
+                    clearForm('addForm');
+                    loadTeachers(currentPage);
+                } else {
+                    showAlert(response.data.detail || '添加失败', 'error');
+                }
+            } catch (error) {
+                console.error('Add error:', error);
+                showAlert('添加失败', 'error');
+            }
+        }
+
+        async function editTeacher(id) {
+            currentEditId = id;
+            try {
+                const response = await request(`/teacher/check_teacher?page_num=1&page_size=100`);
+                const teachers = response.data.data || [];
+                const teacher = teachers.find(t => t.teacher_id === id);
+                
+                if (teacher) {
+                    document.getElementById('editForm').querySelector('input[name="id"]').value = teacher.teacher_id;
+                    document.getElementById('editForm').querySelector('input[name="name"]').value = teacher.name;
+                    document.getElementById('editForm').querySelector('select[name="gender"]').value = teacher.sex;
+                    document.getElementById('editForm').querySelector('input[name="age"]').value = calculateAge(teacher.birth);
+                    document.getElementById('editForm').querySelector('input[name="title"]').value = teacher.subject;
+                    document.getElementById('editForm').querySelector('input[name="course"]').value = teacher.subject;
+                    openModal('editModal');
+                }
+            } catch (error) {
+                console.error('Edit error:', error);
+                showAlert('获取数据失败', 'error');
+            }
+        }
+
+        async function updateTeacher() {
+            const form = document.getElementById('editForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            const teacherData = {
+                name: data.name,
+                sex: data.gender,
+                birth: calculateBirthDate(parseInt(data.age)),
+                subject: data.course || data.title
+            };
+            
+            try {
+                const response = await request(`/teacher/update_teacher/${currentEditId}`, {
+                    method: 'PUT',
+                    body: teacherData
+                });
+                
+                if (response.data.message === '查询成功！') {
+                    showAlert('修改成功');
+                    closeModal('editModal');
+                    clearForm('editForm');
+                    loadTeachers(currentPage);
+                } else {
+                    showAlert(response.data.detail || '修改失败', 'error');
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                showAlert('修改失败', 'error');
+            }
+        }
+
+        async function deleteTeacher(id) {
+            if (!confirm('确定要删除该教师吗？')) return;
+            
+            try {
+                const response = await request(`/teacher/delete_teacher/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.data.message === '查询成功！') {
+                    showAlert('删除成功');
+                    loadTeachers(currentPage);
+                } else {
+                    showAlert(response.data.detail || '删除失败', 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showAlert('删除失败', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserInfo();
+            loadTeachers(1);
+        });
+    </script>
+</body>
+</html>

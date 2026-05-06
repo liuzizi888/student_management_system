@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生管理系统 - 统计分析</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>学生管理系统</h1>
+        <div class="header-right">
+            <span>欢迎使用</span>
+            <button class="btn-logout" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <ul>
+            <li><a href="index.html"><span class="nav-icon">🏠</span>首页</a></li>
+            <li><a href="student.html"><span class="nav-icon">👨‍🎓</span>学生管理</a></li>
+            <li><a href="teacher.html"><span class="nav-icon">👨‍🏫</span>教师管理</a></li>
+            <li><a href="class.html"><span class="nav-icon">📚</span>班级管理</a></li>
+            <li><a href="score.html"><span class="nav-icon">📝</span>成绩管理</a></li>
+            <li><a href="employment.html"><span class="nav-icon">💼</span>就业管理</a></li>
+            <li><a href="consultant.html"><span class="nav-icon">👔</span>顾问管理</a></li>
+            <li><a href="department.html"><span class="nav-icon">🏢</span>部门管理</a></li>
+            <li><a href="analysis.html" class="active"><span class="nav-icon">📊</span>统计分析</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">统计分析</h2>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                <button class="btn btn-primary" onclick="loadAgeOver30()">30岁以上学生</button>
+                <button class="btn btn-success" onclick="loadClassCount()">班级人数统计</button>
+                <button class="btn btn-warning" onclick="loadExcellentStudents()">成绩80+学生</button>
+                <button class="btn btn-danger" onclick="loadFailedStudents()">两次不及格学生</button>
+                <button class="btn btn-primary" onclick="loadClassAvgScore()">班级平均分排名</button>
+                <button class="btn btn-success" onclick="loadTopSalary()">薪资TOP5学生</button>
+                <button class="btn btn-warning" onclick="loadEmployTime()">学生就业时长</button>
+                <button class="btn btn-danger" onclick="loadAvgEmployTime()">班级平均就业时长</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title" id="resultTitle">统计结果</h2>
+            </div>
+            <table class="table" id="resultTable">
+                <thead>
+                    <tr>
+                        <th>请选择一个统计项目</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td class="empty-state">选择上方按钮查看统计结果</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        async function loadAgeOver30() {
+            try {
+                const response = await request('/student/age/over30');
+                document.getElementById('resultTitle').textContent = '30岁以上学生';
+                renderResult(response.data.data || [], ['学生编号', '姓名', '年龄', '性别', '班级']);
+            } catch (error) {
+                console.error('Load age over 30 error:', error);
+                showAlert('加载失败', 'error');
+            }
+        }
+
+        async function loadClassCount() {
+            try {
+                const response = await request('/student/count');
+                document.getElementById('resultTitle').textContent = '班级人数统计';
+                renderResult(response.data.data || [], ['班级名称', '总人数', '男生人数', '女生人数']);
+            } catch (error) {
+                console.error('Load class count error:', error);
+                showAlert('加载失败', 'error');
+            }
+        }
+
+        async function loadExcellentStudents() {
+            try {
+                const response = await request('/student/score/excellent');
+                document.getElementById('resultTitle').textContent = '成绩80+学生';
+                renderResult(response.data.data || [], ['学生编号', '姓名', '班级']);
+            } catch (error) {
+                console.error('Load excellent students error:', error);
+                showAlert('加载失败', 'error');
+            }
+        }
+
+        async function loadFailedStudents() {
+            try {
+                const response = await request('/student/score/excellent_1');
+                document.getElementById('resultTitle').textContent = '两次不及格学生';
+                renderResult(response.data.data || [], ['学生编号', '姓名', '班级', '不及格次数']);
+            } catch (error) {
+                console.error('Load failed students error:', error);
+                showAlert('加载失败', 'error');
+            }
+        }
+
+        async function loadClassAvgScore() {
+            try {
+                const response = await request('/student/score/excellent_2');
+                document.getElementById('resultTitle').textContent = '班级平均分排名';
+                renderResult(response.data.data || [], ['考核序次', '班级名称', '平均分']);
+            } catch (error) {
+                console.error('Load class avg score error:', error);
+                showAlert('加载失败', 'error');
+            }
+        }
+
+        async function loadTopSalary() {
+            try {
+                const response = await request('/student/top_salary');
+                document.getElementById('resultTitle').textContent = '薪资TOP5学生';
+                renderResult(response.data.data || [], ['学生编号', '姓名', '班级', '就业时间', '就业公司']);
+            } catch (error) {
+                console.error('Load top salary error:', error);
+                showAlert('加载失败', 'error');
+            }
+        }
+
+        async function loadEmployTime() {
+            try {
+                const response = await request('/student/employ_time');
+                document.getElementById('resultTitle').textContent = '学生就业时长';
+                renderResult(response.data.data || [], ['学生编号', '姓名', '班级', '就业时长(天)']);
+            } catch (error) {
+                console.error('Load employ time error:', error);
+                showAlert('加载失败', 'error');
+            }
+        }
+
+        async function loadAvgEmployTime() {
+            try {
+                const response = await request('/student/avg_time');
+                document.getElementById('resultTitle').textContent = '班级平均就业时长';
+                renderResult(response.data.data || [], ['班级名称', '平均就业时长(天)']);
+            } catch (error) {
+                console.error('Load avg employ time error:', error);
+                showAlert('加载失败', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadUserInfo);
+
+        function renderResult(data, columns) {
+            const table = document.getElementById('resultTable');
+            
+            if (!data || data.length === 0) {
+                table.innerHTML = `
+                    <thead><tr><th colspan="${columns.length}">暂无数据</th></tr></thead>
+                    <tbody><tr><td colspan="${columns.length}" class="empty-state">暂无统计数据</td></tr></tbody>
+                `;
+                return;
+            }
+
+            const headers = columns.join('</th><th>');
+            const rows = data.map(item => {
+                const cells = columns.map(col => {
+                    const key = col.replace(/[（）()（）]/g, '');
+                    let value = item[key] || item[col] || '-';
+                    return `<td>${value}</td>`;
+                }).join('');
+                return `<tr>${cells}</tr>`;
+            }).join('');
+
+            table.innerHTML = `
+                <thead><tr><th>${headers}</th></tr></thead>
+                <tbody>${rows}</tbody>
+            `;
+        }
+    </script>
+</body>
+</html>
