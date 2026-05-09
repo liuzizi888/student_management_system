@@ -21,21 +21,44 @@ def add_student(db: Session, student: dict) -> bool:
 
 
 # 查询学生
-def get_detail(db: Session, key, value):
-    '''
-    多条件查询学生信息
-    :param db: Session
-    :param key: 查询类目
-    :param value: 查询类目下的值
-    :return:查询结果
-    '''
-    if key == '编号':
-        result = db.query(Student).filter(Student.student_id == value, Student.del_flag != 'Y').all()
-    elif key == '姓名':
-        result = db.query(Student).filter(Student.name == value, Student.del_flag != 'Y').all()
+# def get_detail(db: Session, key, value):
+#     '''
+#     多条件查询学生信息
+#     :param db: Session
+#     :param key: 查询类目
+#     :param value: 查询类目下的值
+#     :return:查询结果
+#     '''
+#     if key == '编号':
+#         result = db.query(Student).filter(Student.student_id == value, Student.del_flag != 'Y').all()
+#     elif key == '姓名':
+#         result = db.query(Student).filter(Student.name == value, Student.del_flag != 'Y').all()
+#     else:
+#         result = db.query(Student).filter(Student.class_id == value, Student.del_flag != 'Y').all()
+#     return result
+
+def get_detail_by_id(db: Session, student_id):
+    """根据编号查询单个学生"""
+    return db.query(Student).filter(
+        Student.student_id == student_id,
+        Student.del_flag != 'Y'
+    ).first()
+
+
+def get_detail_with_pagination(db: Session, key, value, page=1, page_size=10):
+    """分页查询学生信息"""
+    base_query = db.query(Student).filter(Student.del_flag != 'Y')
+
+    if key == '姓名':
+        base_query = base_query.filter(Student.name == value)
     else:
-        result = db.query(Student).filter(Student.class_id == value, Student.del_flag != 'Y').all()
-    return result
+        base_query = base_query.filter(Student.class_id == value)
+
+    total = base_query.count()
+    offset = (page - 1) * page_size
+    result = base_query.offset(offset).limit(page_size).all()
+
+    return result, total
 
 
 # 修改学生信息
@@ -67,14 +90,14 @@ def put_student1(db: Session, id: int, student: dict):
 
 
 # 删除学生
-def delete_student(db: Session, student_id: int):
+def delete_student(db: Session, id: int):
     '''
     删除学生信息
     :param db: Session
-    :param student_id:学生编号
+    :param id:学生编号
     :return: bool
     '''
-    student = db.query(Student).filter(Student.student_id == student_id, Student.del_flag != 'Y').first()
+    student = db.query(Student).filter(Student.student_id == id, Student.del_flag != 'Y').first()
     if student:
         student.create_time = datetime.now()
         student.del_flag = 'Y'

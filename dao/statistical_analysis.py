@@ -24,8 +24,8 @@ def count_students1(db: Session):
     :param db:Session
     :return:统计结果
     '''
-    class_count = db.query(Student.class_id, func.count(Student.student_id)).group_by(Student.class_id).all()
-    gender_count = db.query(Student.gender, func.count(Student.student_id)).group_by(Student.gender).all()
+    class_count = db.query(Student.class_id, func.count(Student.student_id)).filter(Student.del_flag != 'Y').group_by(Student.class_id).all()
+    gender_count = db.query(Student.gender, func.count(Student.student_id)).filter(Student.del_flag != 'Y').group_by(Student.gender).all()
     class_count1 = [{"班级编号": k, "班级人数": v} for k, v in class_count]
     gender_count1 = [{"性别": k, "人数": v} for k, v in gender_count]
     return {'班级人数统计': class_count1,
