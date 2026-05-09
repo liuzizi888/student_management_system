@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Request, Response, Form, Depends
 from starlette.responses import HTMLResponse
 from db.database import get_db
-from utils.decorator import get_token, aes_decrypt
+from utils.decorator import get_token
 from dao import sysuser
 from utils.log import logger
 from dotenv import load_dotenv
-from datetime import datetime
 import os
 
 load_dotenv()
@@ -61,30 +60,26 @@ async def logout(res: Response):
 # 获取当前登录用户信息
 @login_router.get("/userinfo")
 async def get_userinfo(request: Request, db=Depends(get_db)):
-    token = request.cookies.get("token")
-    if not token:
+    # 从中间件注入的 request.state 中获取用户信息
+    if not hasattr(request.state, "user"):
         return {"code": 401, "msg": "请先登录"}
-    try:
-        info = aes_decrypt(token)
-        now = int(datetime.now().timestamp())
-        if now > info["exp"]:
-            return {"code": 401, "msg": "登录已过期，请重新登录"}
-        # 查询用户
-        user = sysuser.queryUserByPK(db, info["uid"])
-        if not user:
-            return {"code": 404, "msg": "用户不存在"}
-        return {
-            "code": 200,
-            "data": {
-                "uid": info["uid"],
-                "username": user.username,
-                "role": info["role"],
-                "role_name": user.role.role_name
-            }
+    
+    user = request.state.user
+    
+    # 查询用户完整信息
+    user_record = sysuser.queryUserByPK(db, user["uid"])
+    if not user_record:
+        return {"code": 404, "msg": "用户不存在"}
+    
+    return {
+        "code": 200,
+        "data": {
+            "uid": user["uid"],
+            "username": user_record.username,
+            "role": user["role"],
+            "role_name": user_record.role.role_name
         }
-    except Exception as e:
-        logger.error(f"获取用户信息失败: {e}")
-        return {"code": 401, "msg": "Token无效或已过期"}
+    }
 
 
 @login_router.get("/manager", response_class=HTMLResponse)

@@ -4,7 +4,6 @@ from db.database import get_db
 from dao import consultant as consultant_dao
 from utils.log import logger
 from utils.decorator import auth
-
 consultant_router = APIRouter()
 
 
@@ -39,7 +38,7 @@ async def update_consultant(request: Request, consultant: Cosulant, consultant_i
 
 
 @consultant_router.delete("/{consultant_id}", summary='删除顾问信息')
-@auth(allow_role=["admin"])
+# @auth(allow_role=["admin"])
 async def delete_consultant(request: Request, consultant_id: int = Path(..., description='顾问ID'), db=Depends(get_db)):
     try:
         ret = consultant_dao.delete_consultant(db, consultant_id)
