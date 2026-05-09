@@ -26,7 +26,7 @@ app = FastAPI(title="学生管理系统",
 # 注册认证中间件
 app.add_middleware(AuthMiddleware)
 
-app.include_router(student.student_router, prefix='/student', tags=['学生基本信息'])
+app.include_router(student.student_router, tags=['学生基本信息'])
 app.include_router(score.score_router, prefix="/score", tags=["成绩板块"])
 app.include_router(employment.employment_router, prefix='/employment', tags=["就业信息系统"])
 app.include_router(class_info.class_router, prefix='/class_info', tags=["班级管理系统"])

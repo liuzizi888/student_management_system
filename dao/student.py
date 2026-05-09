@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from models.student import Student
 from sqlalchemy import func
 from datetime import date, datetime
+from typing import List, Tuple, Optional, Any
 
 
 # 增加学生
@@ -20,24 +21,7 @@ def add_student(db: Session, student: dict) -> bool:
     return True
 
 
-# 查询学生
-# def get_detail(db: Session, key, value):
-#     '''
-#     多条件查询学生信息
-#     :param db: Session
-#     :param key: 查询类目
-#     :param value: 查询类目下的值
-#     :return:查询结果
-#     '''
-#     if key == '编号':
-#         result = db.query(Student).filter(Student.student_id == value, Student.del_flag != 'Y').all()
-#     elif key == '姓名':
-#         result = db.query(Student).filter(Student.name == value, Student.del_flag != 'Y').all()
-#     else:
-#         result = db.query(Student).filter(Student.class_id == value, Student.del_flag != 'Y').all()
-#     return result
-
-def get_detail_by_id(db: Session, student_id):
+def get_detail_by_id(db: Session, student_id: int) -> Optional[Student]:
     """根据编号查询单个学生"""
     return db.query(Student).filter(
         Student.student_id == student_id,
@@ -45,7 +29,7 @@ def get_detail_by_id(db: Session, student_id):
     ).first()
 
 
-def get_detail_with_pagination(db: Session, key, value, page=1, page_size=10):
+def get_detail_with_pagination(db: Session, key: str, value: Any, page: int = 1, page_size: int = 10) -> Tuple[List[Student], int]:
     """分页查询学生信息"""
     base_query = db.query(Student).filter(Student.del_flag != 'Y')
 
@@ -62,7 +46,7 @@ def get_detail_with_pagination(db: Session, key, value, page=1, page_size=10):
 
 
 # 修改学生信息
-def put_student1(db: Session, id: int, student: dict):
+def put_student1(db: Session, id: int, student: dict) -> bool:
     '''
     修改学生信息
     :param db: Session
@@ -90,7 +74,7 @@ def put_student1(db: Session, id: int, student: dict):
 
 
 # 删除学生
-def delete_student(db: Session, id: int):
+def delete_student(db: Session, id: int) -> bool:
     '''
     删除学生信息
     :param db: Session
