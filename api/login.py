@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Response, Form, Depends
 from starlette.responses import HTMLResponse
-from database import get_db
-from utils.decorator import get_token, auth, aes_decrypt
+from db.database import get_db
+from utils.decorator import get_token, aes_decrypt
 from dao import sysuser
 from utils.log import logger
 from dotenv import load_dotenv

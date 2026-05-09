@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, Date, func, ForeignKey
-from database import Base
+from db.database import Base
 from sqlalchemy.orm import relationship
 
 class Consultant(Base):

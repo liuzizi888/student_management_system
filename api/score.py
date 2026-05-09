@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException,Path,Query
 # from scripts.regsetup import description
 
-from database import get_db
+from db.database import get_db
 from dao import score
 from utils.log import logger
 from sqlalchemy.orm import Session

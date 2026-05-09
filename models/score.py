@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime, Float, ForeignKey,func
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
-from database import Base, engine
+from db.database import Base
 
 
 #分数表

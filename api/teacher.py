@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
-from database import get_db, Session
+from fastapi import APIRouter, Depends, HTTPException, Path
+from db.database import get_db, Session
 from schemas.teacher import TeacherInfo
 from utils.log import logger
 from dao.teacher import check_teachers, add_teacher, del_teacher, up_teacher

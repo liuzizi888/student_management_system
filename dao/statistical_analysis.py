@@ -1,8 +1,7 @@
 from fastapi import Depends
 from sqlalchemy import func
-from sqlalchemy.sql.functions import count,min
 
-from database import Session, get_db
+from db.database import Session, get_db
 from models.employment import Employment
 from models.score import Score
 from models.student import Student

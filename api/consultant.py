@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
 from schemas.consultant import Cosulant
-from database import get_db
+from db.database import get_db
 from dao import consultant as consultant_dao
 from utils.log import logger
 from utils.decorator import auth

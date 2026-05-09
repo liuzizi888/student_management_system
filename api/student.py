@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from schemas.student import Student
-from database import get_db
+from db.database import get_db
 from dao.student import add_student, get_detail, delete_student,put_student1
 from utils.log import logger
 from typing import Literal, Union

@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime, Float, ForeignKey,func
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey,func
 from sqlalchemy.orm import relationship
 
-from database import Base, engine
+from db.database import Base
+
+
 #学生表
 class Student(Base):
     __tablename__ = 't_student'

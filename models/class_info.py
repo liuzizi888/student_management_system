@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime, Float, ForeignKey, Table, func
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, Table, func
 from sqlalchemy.orm import relationship
-from database import Base, engine
+from db.database import Base
+
 #中间表
 ClassToTeacher = Table(
     't_class_to_teacher',

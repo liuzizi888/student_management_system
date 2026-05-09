@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, Date, DateTime, Float, ForeignKey
 from sqlalchemy.orm import relationship
 
-from database import Base, engine
+from db.database import Base
+
 
 #就业信息表
 class Employment(Base):
@@ -17,7 +18,7 @@ class Employment(Base):
     offer_time = Column(Date, comment="offer下发时间")
     company = Column(String(50), comment="就业公司")
     salary = Column(Float, comment="就业薪资")
-    del_flag = Column(String(20), nullable=False, default=None, comment="软删除 ''-正常 Y-删除")
+    del_flag = Column(String(20), nullable=False, default=0, comment="软删除 ''-正常 Y-删除")
     creat_time= Column(DateTime, nullable=False,comment ="创建时间")
     update_time = Column(DateTime, nullable=False,comment="更新时间")
     # 学生（一）对应就业信息（多）
