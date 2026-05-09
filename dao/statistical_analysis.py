@@ -1,8 +1,7 @@
 from fastapi import Depends
 from sqlalchemy import func
-from sqlalchemy.sql.functions import count,min
 
-from database import Session, get_db
+from db.database import Session, get_db
 from models.employment import Employment
 from models.score import Score
 from models.student import Student
@@ -31,6 +30,7 @@ def count_students1(db: Session):
     return {'班级人数统计': class_count1,
             '男女生人数统计': gender_count1
             }
+
 
 # 成绩统计
 # 5.查询每次考试成绩都在80分以上的学⽣的编号，姓名和成绩

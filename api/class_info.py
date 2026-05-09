@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from schemas.class_info import ClassInfo
-from database import get_db
+from db.database import get_db
 from utils.log import logger
 from schemas import class_info
 from dao import class_info

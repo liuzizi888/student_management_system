@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from database import Base
+from db.database import Base
 from sqlalchemy import Column, Integer, String, DateTime, func
 from sqlalchemy.orm import relationship
 

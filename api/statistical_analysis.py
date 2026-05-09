@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from dao.statistical_analysis import student_salary, employ_times, employ_avg_time
-from database import get_db, Session
+from db.database import get_db, Session
 from dao import statistical_analysis
 from schemas.employment import CommonResponse, StudentSalaryItem
 from utils.log import logger

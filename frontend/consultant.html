@@ -37,8 +37,7 @@
             </div>
             
             <div class="search-bar">
-                <input type="number" id="pageSize" class="form-control" placeholder="每页条数" value="10" min="1" style="max-width: 120px;">
-                <input type="number" id="pageNum" class="form-control" placeholder="页码" value="1" min="1" style="max-width: 120px;">
+                <input type="text" id="consultantName" class="form-control" placeholder="顾问姓名" style="max-width: 150px;">
                 <button class="btn btn-primary" onclick="loadConsultants()">查询</button>
             </div>
 
@@ -60,6 +59,21 @@
                     <tr><td colspan="9" class="empty-state">加载中...</td></tr>
                 </tbody>
             </table>
+
+            <div class="pagination">
+                <div class="pagination-info">
+                    共 <span id="totalRecords">0</span> 条记录，当前第 <span id="currentPage">1</span> / <span id="totalPages">1</span> 页
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn btn-sm" id="prevPage" onclick="prevPage()">上一页</button>
+                    <div class="page-numbers" id="pageNumbers"></div>
+                    <button class="btn btn-sm" id="nextPage" onclick="nextPage()">下一页</button>
+                    <div class="page-jump">
+                        跳至 <input type="number" id="jumpPage" class="form-control" min="1" value="1" onkeypress="if(event.key==='Enter') jumpToPage()"> 页
+                        <button class="btn btn-sm btn-primary" onclick="jumpToPage()">跳转</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -84,8 +98,10 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>所属部门ID</label>
-                            <input type="number" name="dept_id" class="form-control" required>
+                            <label>所属部门</label>
+                            <select name="dept_id" id="deptSelect" class="form-control" required>
+                                <option value="">请选择部门</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>职位</label>
@@ -142,8 +158,10 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>所属部门ID</label>
-                            <input type="number" name="dept_id" class="form-control" required>
+                            <label>所属部门</label>
+                            <select name="dept_id" id="deptSelectEdit" class="form-control" required>
+                                <option value="">请选择部门</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>职位</label>
@@ -181,15 +199,64 @@
     <script src="utils.js"></script>
     <script>
         let currentEditId = null;
+        let paginationData = {
+            pageSize: 10,
+            pageNum: 1,
+            total: 0,
+            data: []
+        };
 
-        async function loadConsultants() {
-            const pageSize = document.getElementById('pageSize').value || 10;
-            const pageNum = document.getElementById('pageNum').value || 1;
-            
+        // 加载部门列表
+        async function loadDepartments() {
             try {
-                const response = await request(`/consultant/page/${pageSize}/${pageNum}`);
-                const consultants = response.data.data || [];
-                renderConsultants(consultants);
+                const response = await request('/department/page/100/1');
+                const result = response.data.data || {};
+                const departments = result.data || [];
+                
+                // 填充添加表单的部门选择框
+                const deptSelect = document.getElementById('deptSelect');
+                departments.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept.department_id;
+                    option.textContent = dept.dept_name;
+                    deptSelect.appendChild(option);
+                });
+                
+                // 填充编辑表单的部门选择框
+                const deptSelectEdit = document.getElementById('deptSelectEdit');
+                departments.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept.department_id;
+                    option.textContent = dept.dept_name;
+                    deptSelectEdit.appendChild(option);
+                });
+            } catch (error) {
+                console.error('加载部门列表失败:', error);
+            }
+        }
+
+        async function loadConsultants(pageNum = 1) {
+            const pageSize = 10;
+            const consultantName = document.getElementById('consultantName').value.trim();
+            paginationData.pageSize = pageSize;
+            paginationData.pageNum = pageNum;
+
+            let url = `/consultant/page/${pageSize}/${pageNum}`;
+            if (consultantName) {
+                url += `?consultant_name=${encodeURIComponent(consultantName)}`;
+            }
+
+            try {
+                const response = await request(url);
+                if (response.data.status_code === 200) {
+                    const result = response.data.data || {};
+                    paginationData.total = result.total || 0;
+                    paginationData.data = result.data || [];
+                    renderConsultants(paginationData.data);
+                    updatePagination();
+                } else {
+                    document.getElementById('consultantTable').innerHTML = '<tr><td colspan="9" class="empty-state">加载失败</td></tr>';
+                }
             } catch (error) {
                 console.error('Load consultants error:', error);
                 document.getElementById('consultantTable').innerHTML = '<tr><td colspan="9" class="empty-state">加载失败</td></tr>';
@@ -202,7 +269,7 @@
                 tbody.innerHTML = '<tr><td colspan="9" class="empty-state">暂无顾问数据</td></tr>';
                 return;
             }
-            
+
             tbody.innerHTML = consultants.map(c => `
                 <tr>
                     <td>${c.consultant_id || '-'}</td>
@@ -221,6 +288,82 @@
             `).join('');
         }
 
+        function updatePagination() {
+            const totalPages = Math.ceil(paginationData.total / paginationData.pageSize) || 1;
+
+            document.getElementById('totalRecords').textContent = paginationData.total;
+            document.getElementById('currentPage').textContent = paginationData.pageNum;
+            document.getElementById('totalPages').textContent = totalPages;
+            document.getElementById('jumpPage').max = totalPages;
+            document.getElementById('jumpPage').value = paginationData.pageNum;
+
+            document.getElementById('prevPage').disabled = paginationData.pageNum <= 1;
+            document.getElementById('nextPage').disabled = paginationData.pageNum >= totalPages;
+
+            renderPageNumbers(totalPages);
+        }
+
+        function renderPageNumbers(totalPages) {
+            const container = document.getElementById('pageNumbers');
+            const current = paginationData.pageNum;
+            let html = '';
+
+            const maxVisible = 5;
+            let start = Math.max(1, current - Math.floor(maxVisible / 2));
+            let end = Math.min(totalPages, start + maxVisible - 1);
+
+            if (end - start < maxVisible - 1) {
+                start = Math.max(1, end - maxVisible + 1);
+            }
+
+            if (start > 1) {
+                html += `<button class="btn btn-sm page-num" onclick="goToPage(1)">1</button>`;
+                if (start > 2) {
+                    html += `<span class="page-ellipsis">...</span>`;
+                }
+            }
+
+            for (let i = start; i <= end; i++) {
+                const active = i === current ? 'active' : '';
+                html += `<button class="btn btn-sm page-num ${active}" onclick="goToPage(${i})">${i}</button>`;
+            }
+
+            if (end < totalPages) {
+                if (end < totalPages - 1) {
+                    html += `<span class="page-ellipsis">...</span>`;
+                }
+                html += `<button class="btn btn-sm page-num" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function goToPage(pageNum) {
+            const totalPages = Math.ceil(paginationData.total / paginationData.pageSize) || 1;
+            pageNum = Math.max(1, Math.min(pageNum, totalPages));
+            loadConsultants(pageNum);
+        }
+
+        function prevPage() {
+            if (paginationData.pageNum > 1) {
+                loadConsultants(paginationData.pageNum - 1);
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(paginationData.total / paginationData.pageSize) || 1;
+            if (paginationData.pageNum < totalPages) {
+                loadConsultants(paginationData.pageNum + 1);
+            }
+        }
+
+        function jumpToPage() {
+            const jumpPage = parseInt(document.getElementById('jumpPage').value);
+            if (jumpPage) {
+                goToPage(jumpPage);
+            }
+        }
+
         async function addConsultant() {
             const form = document.getElementById('addForm');
             const formData = new FormData(form);
@@ -228,9 +371,7 @@
             
             data.dept_id = parseInt(data.dept_id);
             data.status = parseInt(data.status);
-            if (data.entry_date) {
-                data.entry_date = new Date(data.entry_date).toISOString();
-            }
+            // entry_date 保持原格式即可
             
             try {
                 const response = await request('/consultant/add', {
@@ -256,14 +397,15 @@
             currentEditId = id;
             try {
                 const response = await request(`/consultant/page/100/1`);
-                const consultants = response.data.data || [];
+                const result = response.data.data || {};
+                const consultants = result.data || [];
                 const consultant = consultants.find(c => c.consultant_id === id);
                 
                 if (consultant) {
                     document.getElementById('editForm').querySelector('input[name="id"]').value = consultant.consultant_id;
                     document.getElementById('editForm').querySelector('input[name="name"]').value = consultant.name || '';
                     document.getElementById('editForm').querySelector('select[name="gender"]').value = consultant.gender || '男';
-                    document.getElementById('editForm').querySelector('input[name="dept_id"]').value = consultant.dept_id || '';
+                    document.getElementById('editForm').querySelector('select[name="dept_id"]').value = consultant.dept_id || '';
                     document.getElementById('editForm').querySelector('input[name="position"]').value = consultant.position || '';
                     document.getElementById('editForm').querySelector('input[name="phone"]').value = consultant.phone || '';
                     document.getElementById('editForm').querySelector('input[name="entry_date"]').value = consultant.entry_date?.split('T')[0] || '';
@@ -284,9 +426,7 @@
             
             data.dept_id = parseInt(data.dept_id);
             data.status = parseInt(data.status);
-            if (data.entry_date) {
-                data.entry_date = new Date(data.entry_date).toISOString();
-            }
+            // entry_date 保持原格式即可
             
             try {
                 const response = await request(`/consultant/update?consultant_id=${currentEditId}`, {
@@ -330,7 +470,8 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadUserInfo();
-            loadConsultants();
+            loadDepartments();
+            loadConsultants(1);
         });
     </script>
 </body>

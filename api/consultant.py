@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
 from schemas.consultant import Cosulant
-from database import get_db
+from db.database import get_db
 from dao import consultant as consultant_dao
 from utils.log import logger
 from utils.decorator import auth
-
 consultant_router = APIRouter()
 
 
@@ -12,7 +11,7 @@ consultant_router = APIRouter()
 @auth(allow_role=["admin"])
 async def add_consultant(request: Request, consultant: Cosulant, db=Depends(get_db), summary='增加顾问信息'):
     try:
-        consultant_obj = consultant.dict()
+        consultant_obj = consultant.model_dump()
         ret = consultant_dao.add_consultant(db, consultant_obj)
         if ret:
             return {'message': '增加成功！', 'status_code': 200}
@@ -27,7 +26,7 @@ async def add_consultant(request: Request, consultant: Cosulant, db=Depends(get_
 @auth(allow_role=["admin"])
 async def update_consultant(request: Request, consultant: Cosulant, consultant_id: int = Query(..., description="顾问ID"), db=Depends(get_db)):
     try:
-        consultant_obj = consultant.dict()
+        consultant_obj = consultant.model_dump()
         ret_count = consultant_dao.update_consultant(db, consultant_id, consultant_obj)
         if ret_count > 0:
             return {'message': '修改成功！', 'status_code': 200}
@@ -39,7 +38,7 @@ async def update_consultant(request: Request, consultant: Cosulant, consultant_i
 
 
 @consultant_router.delete("/{consultant_id}", summary='删除顾问信息')
-@auth(allow_role=["admin"])
+# @auth(allow_role=["admin"])
 async def delete_consultant(request: Request, consultant_id: int = Path(..., description='顾问ID'), db=Depends(get_db)):
     try:
         ret = consultant_dao.delete_consultant(db, consultant_id)
@@ -54,10 +53,10 @@ async def delete_consultant(request: Request, consultant_id: int = Path(..., des
 
 @consultant_router.get("/page/{page_size}/{page_num}", summary='查询顾问信息（分页）')
 @auth(allow_role=["admin", "employee"])
-async def query_department_page(request: Request, db=Depends(get_db), page_size: int = Path(..., description='显示的条数'),
+async def query_consultant_page(request: Request, consultant_name: str | None = Query(None), db=Depends(get_db), page_size: int = Path(..., description='显示的条数'),
                           page_num: int = Path(..., description='页数')):
     try:
-        dep_list = consultant_dao.query_all(db, page_size, page_num)
+        dep_list = consultant_dao.query_all(db, consultant_name, page_size, page_num)
         return {'message': '查询成功！', 'status_code': 200, 'data': dep_list}
     except Exception as e:
         logger.error(e)

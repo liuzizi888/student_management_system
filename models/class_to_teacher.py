@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime, Float, ForeignKey,Table
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey,Table
 
-from database import Base, engine
+from db.database import Base
+
 # class ClassToTeacher(Base):
 #     __tablename__ = 't_class_to_teacher'
 #     class_id = Column(Integer, ForeignKey("t_class_info.class_id"),comment="班级编号")

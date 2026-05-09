@@ -38,6 +38,7 @@
 
             <div class="search-bar">
                 <select id="searchKey" class="form-control" style="max-width: 120px;">
+                    <option value="全部">全部</option>
                     <option value="学生编号">学生编号</option>
                     <option value="就业公司">就业公司</option>
                     <option value="工资">工资</option>
@@ -49,11 +50,11 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>编号</th>
                         <th>学生编号</th>
                         <th>学生姓名</th>
+                        <th>班级编号</th>
                         <th>就业公司</th>
-                        <th>岗位</th>
                         <th>薪资</th>
                         <th>就业时间</th>
                         <th>操作</th>
@@ -64,10 +65,19 @@
                 </tbody>
             </table>
 
-            <div class="pagination" id="pagination">
-                <button onclick="prevPage()" disabled>上一页</button>
-                <span>第 <span id="currentPage">1</span> 页</span>
-                <button onclick="nextPage()">下一页</button>
+            <div class="pagination">
+                <div class="pagination-info">
+                    共 <span id="totalRecords">0</span> 条记录，当前第 <span id="currentPage">1</span> / <span id="totalPages">1</span> 页
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn btn-sm" id="prevPage" onclick="prevPage()">上一页</button>
+                    <div class="page-numbers" id="pageNumbers"></div>
+                    <button class="btn btn-sm" id="nextPage" onclick="nextPage()">下一页</button>
+                    <div class="page-jump">
+                        跳至 <input type="number" id="jumpPage" class="form-control" min="1" value="1" onkeypress="if(event.key==='Enter') jumpToPage()"> 页
+                        <button class="btn btn-sm btn-primary" onclick="jumpToPage()">跳转</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -83,27 +93,27 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>学生编号</label>
-                            <input type="text" name="student_id" class="form-control" required>
+                            <input type="number" name="student_id" class="form-control" required>
                         </div>
                         <div class="form-group">
                             <label>学生姓名</label>
-                            <input type="text" name="student_name" class="form-control" required>
+                            <input type="text" name="student_name" class="form-control" required maxlength="20">
+                        </div>
+                        <div class="form-group">
+                            <label>班级编号</label>
+                            <input type="number" name="class_id" class="form-control" required>
                         </div>
                         <div class="form-group">
                             <label>就业公司</label>
-                            <input type="text" name="company" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>岗位</label>
-                            <input type="text" name="job" class="form-control" required>
+                            <input type="text" name="company" class="form-control" required maxlength="50">
                         </div>
                         <div class="form-group">
                             <label>薪资</label>
-                            <input type="number" name="salary" class="form-control" required>
+                            <input type="number" name="salary" class="form-control" required step="0.01">
                         </div>
                         <div class="form-group">
                             <label>就业时间</label>
-                            <input type="date" name="employ_time" class="form-control" required>
+                            <input type="date" name="offer_time" class="form-control" required>
                         </div>
                     </div>
                 </form>
@@ -123,31 +133,31 @@
             </div>
             <div class="modal-body">
                 <form id="editForm">
-                    <input type="hidden" name="id">
+                    <input type="hidden" name="employment_id">
                     <div class="form-row">
                         <div class="form-group">
                             <label>学生编号</label>
-                            <input type="text" name="student_id" class="form-control" required>
+                            <input type="number" name="student_id" class="form-control" required>
                         </div>
                         <div class="form-group">
                             <label>学生姓名</label>
-                            <input type="text" name="student_name" class="form-control" required>
+                            <input type="text" name="student_name" class="form-control" required maxlength="20">
+                        </div>
+                        <div class="form-group">
+                            <label>班级编号</label>
+                            <input type="number" name="class_id" class="form-control" required>
                         </div>
                         <div class="form-group">
                             <label>就业公司</label>
-                            <input type="text" name="company" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>岗位</label>
-                            <input type="text" name="job" class="form-control" required>
+                            <input type="text" name="company" class="form-control" required maxlength="50">
                         </div>
                         <div class="form-group">
                             <label>薪资</label>
-                            <input type="number" name="salary" class="form-control" required>
+                            <input type="number" name="salary" class="form-control" required step="0.01">
                         </div>
                         <div class="form-group">
                             <label>就业时间</label>
-                            <input type="date" name="employ_time" class="form-control" required>
+                            <input type="date" name="offer_time" class="form-control" required>
                         </div>
                     </div>
                 </form>
@@ -161,22 +171,91 @@
 
     <script src="utils.js"></script>
     <script>
-        let currentPage = 1;
         let currentEditId = null;
-        let allEmployments = [];
+        let paginationData = {
+            pageSize: 10,
+            pageNum: 1,
+            total: 0,
+            data: []
+        };
 
-        async function loadEmployments(page = 1) {
+        async function loadEmployments(pageNum = 1) {
+            const pageSize = 10;
+            paginationData.pageSize = pageSize;
+            paginationData.pageNum = pageNum;
+
             try {
-                const response = await request(`/employment/pageshow?page=${page}&size=5`);
-                const employments = response.data.data || [];
-                allEmployments = employments;
+                const url = `/employment/page?key=${encodeURIComponent('全部')}&page=${pageNum}&size=${pageSize}`;
+                console.log('请求URL:', url);
+                const response = await fetch(url, { credentials: 'include' });
+                const result = await response.json();
+                console.log('分页查询响应:', result);
+                const employments = result.data || [];
+                console.log('就业数据:', employments);
+                paginationData.total = employments.length;
+                paginationData.data = employments;
                 renderEmployments(employments);
-                document.getElementById('currentPage').textContent = page;
-                currentPage = page;
+                updatePagination();
             } catch (error) {
                 console.error('Load employments error:', error);
-                document.getElementById('employmentTable').innerHTML = '<tr><td colspan="8" class="empty-state">加载失败</td></tr>';
+                document.getElementById('employmentTable').innerHTML = '<tr><td colspan="8" class="empty-state">加载失败: ' + error.message + '</td></tr>';
             }
+        }
+
+        function updatePagination() {
+            const totalPages = Math.max(1, Math.ceil(paginationData.total / paginationData.pageSize) || 1);
+            
+            document.getElementById('totalRecords').textContent = paginationData.total;
+            document.getElementById('currentPage').textContent = paginationData.pageNum;
+            document.getElementById('totalPages').textContent = totalPages;
+            document.getElementById('jumpPage').max = totalPages;
+            document.getElementById('jumpPage').value = paginationData.pageNum;
+
+            document.getElementById('prevPage').disabled = paginationData.pageNum <= 1;
+            document.getElementById('nextPage').disabled = paginationData.pageNum >= totalPages;
+
+            renderPageNumbers(totalPages);
+        }
+
+        function renderPageNumbers(totalPages) {
+            const container = document.getElementById('pageNumbers');
+            const current = paginationData.pageNum;
+            let html = '';
+
+            const maxVisible = 5;
+            let start = Math.max(1, current - Math.floor(maxVisible / 2));
+            let end = Math.min(totalPages, start + maxVisible - 1);
+
+            if (end - start < maxVisible - 1) {
+                start = Math.max(1, end - maxVisible + 1);
+            }
+
+            if (start > 1) {
+                html += `<button class="btn btn-sm page-num" onclick="goToPage(1)">1</button>`;
+                if (start > 2) {
+                    html += `<span class="page-ellipsis">...</span>`;
+                }
+            }
+
+            for (let i = start; i <= end; i++) {
+                const active = i === current ? 'active' : '';
+                html += `<button class="btn btn-sm page-num ${active}" onclick="goToPage(${i})">${i}</button>`;
+            }
+
+            if (end < totalPages) {
+                if (end < totalPages - 1) {
+                    html += `<span class="page-ellipsis">...</span>`;
+                }
+                html += `<button class="btn btn-sm page-num" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function goToPage(pageNum) {
+            const totalPages = Math.max(1, Math.ceil(paginationData.total / paginationData.pageSize) || 1);
+            pageNum = Math.max(1, Math.min(pageNum, totalPages));
+            loadEmployments(pageNum);
         }
 
         function renderEmployments(employments) {
@@ -188,46 +267,66 @@
             
             tbody.innerHTML = employments.map(e => `
                 <tr>
-                    <td>${e.id || '-'}</td>
+                    <td>${e.employment_id || '-'}</td>
                     <td>${e.student_id || '-'}</td>
                     <td>${e.student_name || '-'}</td>
+                    <td>${e.class_id || '-'}</td>
                     <td>${e.company || '-'}</td>
-                    <td>${e.job || '-'}</td>
-                    <td>${e.salary ? '¥' + e.salary.toLocaleString() : '-'}</td>
-                    <td>${formatDate(e.employ_time)}</td>
+                    <td>${e.salary != null ? '¥' + Number(e.salary).toLocaleString() : '-'}</td>
+                    <td>${formatDate(e.offer_time)}</td>
                     <td>
-                        <button class="btn btn-sm btn-warning" onclick="editEmployment(${e.id})">编辑</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteEmployment(${e.id})">删除</button>
+                        <button class="btn btn-sm btn-warning" onclick="editEmployment(${e.employment_id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEmployment(${e.employment_id})">删除</button>
                     </td>
                 </tr>
             `).join('');
         }
 
         function prevPage() {
-            if (currentPage > 1) {
-                loadEmployments(currentPage - 1);
+            if (paginationData.pageNum > 1) {
+                loadEmployments(paginationData.pageNum - 1);
             }
         }
 
         function nextPage() {
-            loadEmployments(currentPage + 1);
+            const totalPages = Math.max(1, Math.ceil(paginationData.total / paginationData.pageSize) || 1);
+            if (paginationData.pageNum < totalPages) {
+                loadEmployments(paginationData.pageNum + 1);
+            }
+        }
+
+        function jumpToPage() {
+            const jumpPage = parseInt(document.getElementById('jumpPage').value);
+            if (jumpPage) {
+                goToPage(jumpPage);
+            }
         }
 
         async function searchEmployment() {
             const key = document.getElementById('searchKey').value;
             const value = document.getElementById('searchValue').value;
-            
+
             if (!value) {
                 loadEmployments(1);
                 return;
             }
-            
+
             try {
-                const response = await request(`/employment/query_by_type?key=${encodeURIComponent(key)}&value=${encodeURIComponent(value)}`);
-                if (response.data.status_code === 200) {
-                    renderEmployments(response.data.data || []);
+                const url = `/employment/page?key=${encodeURIComponent(key)}&value=${encodeURIComponent(value)}&page=1&size=${paginationData.pageSize}`;
+                const response = await fetch(url, { credentials: 'include' });
+                const result = await response.json();
+
+                if (result.status_code === 200) {
+                    const data = result.data || [];
+                    paginationData.total = data.length;
+                    paginationData.data = data;
+                    paginationData.pageNum = 1;
+                    renderEmployments(data);
+                    updatePagination();
                 } else {
                     renderEmployments([]);
+                    document.getElementById('totalRecords').textContent = 0;
+                    document.getElementById('totalPages').textContent = 1;
                 }
             } catch (error) {
                 console.error('Search error:', error);
@@ -239,42 +338,55 @@
             const form = document.getElementById('addForm');
             const formData = new FormData(form);
             const data = Object.fromEntries(formData);
-            
+
+            // 转换数值为正确的类型
+            data.student_id = parseInt(data.student_id) || 0;
+            data.class_id = parseInt(data.class_id) || 0;
+            data.salary = parseFloat(data.salary) || 0;
+
+            console.log('发送数据:', JSON.stringify(data, null, 2));
+
             try {
-                const response = await request('/employment/add', {
+                const response = await fetch('/employment/add', {
                     method: 'POST',
-                    body: data
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
                 });
-                
-                if (response.data.message === '增加成功！') {
+                const result = await response.json();
+                console.log('响应结果:', result);
+
+                if (result.status_code === 200) {
                     showAlert('添加成功');
                     closeModal('addModal');
                     clearForm('addForm');
-                    loadEmployments(currentPage);
+                    loadEmployments(paginationData.pageNum);
                 } else {
-                    showAlert(response.data.detail || '添加失败', 'error');
+                    showAlert(result.detail || result.message || '添加失败', 'error');
                 }
             } catch (error) {
                 console.error('Add error:', error);
-                showAlert('添加失败', 'error');
+                showAlert('添加失败: ' + error.message, 'error');
             }
         }
 
         async function editEmployment(id) {
             try {
-                const response = await request('/employment/pageshow?page=1&size=100');
-                const employments = response.data.data || [];
-                const employment = employments.find(e => e.id === id);
-                
+                const url = `/employment/page?key=${encodeURIComponent('全部')}&page=1&size=100`;
+                const response = await fetch(url, { credentials: 'include' });
+                const result = await response.json();
+                const employments = result.data || [];
+                const employment = employments.find(e => e.employment_id === id);
+
                 if (employment) {
                     currentEditId = id;
-                    document.getElementById('editForm').querySelector('input[name="id"]').value = employment.id;
+                    document.getElementById('editForm').querySelector('input[name="employment_id"]').value = employment.employment_id;
                     document.getElementById('editForm').querySelector('input[name="student_id"]').value = employment.student_id;
-                    document.getElementById('editForm').querySelector('input[name="student_name"]').value = employment.student_name;
-                    document.getElementById('editForm').querySelector('input[name="company"]').value = employment.company;
-                    document.getElementById('editForm').querySelector('input[name="job"]').value = employment.job;
+                    document.getElementById('editForm').querySelector('input[name="student_name"]').value = employment.student_name || '';
+                    document.getElementById('editForm').querySelector('input[name="class_id"]').value = employment.class_id;
+                    document.getElementById('editForm').querySelector('input[name="company"]').value = employment.company || '';
                     document.getElementById('editForm').querySelector('input[name="salary"]').value = employment.salary;
-                    document.getElementById('editForm').querySelector('input[name="employ_time"]').value = employment.employ_time?.split('T')[0];
+                    document.getElementById('editForm').querySelector('input[name="offer_time"]').value = employment.offer_time?.split('T')[0] || '';
                     openModal('editModal');
                 }
             } catch (error) {
@@ -287,20 +399,28 @@
             const form = document.getElementById('editForm');
             const formData = new FormData(form);
             const data = Object.fromEntries(formData);
-            
+
+            // 转换数值为正确的类型
+            data.student_id = parseInt(data.student_id) || 0;
+            data.class_id = parseInt(data.class_id) || 0;
+            data.salary = parseFloat(data.salary) || 0;
+
             try {
-                const response = await request(`/employment/${currentEditId}`, {
+                const response = await fetch(`/employment/${currentEditId}`, {
                     method: 'PUT',
-                    body: data
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
                 });
-                
-                if (response.data.status_code === 200) {
+                const result = await response.json();
+
+                if (result.status_code === 200) {
                     showAlert('修改成功');
                     closeModal('editModal');
                     clearForm('editForm');
-                    loadEmployments(currentPage);
+                    loadEmployments(paginationData.pageNum);
                 } else {
-                    showAlert(response.data.message || '修改失败', 'error');
+                    showAlert(result.detail || result.message || '修改失败', 'error');
                 }
             } catch (error) {
                 console.error('Update error:', error);
@@ -310,17 +430,19 @@
 
         async function deleteEmployment(id) {
             if (!confirm('确定要删除该就业信息吗？')) return;
-            
+
             try {
-                const response = await request(`/employment/${id}`, {
-                    method: 'DELETE'
+                const response = await fetch(`/employment/${id}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
                 });
-                
-                if (response.data.status_code === 200) {
+                const result = await response.json();
+
+                if (result.status_code === 200) {
                     showAlert('删除成功');
-                    loadEmployments(currentPage);
+                    loadEmployments(paginationData.pageNum);
                 } else {
-                    showAlert(response.data.message || '删除失败', 'error');
+                    showAlert(result.message || '删除失败', 'error');
                 }
             } catch (error) {
                 console.error('Delete error:', error);
