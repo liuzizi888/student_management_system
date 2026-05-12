@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, validator
-from datetime import date
+from datetime import date, datetime
 
 
 class ClassInfo(BaseModel):
